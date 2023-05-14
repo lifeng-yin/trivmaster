@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "target": "es6",
+    "sourceMap": true,
+    "outDir": "dist",
+    "types": ["node"],
+    "noEmit": true
+  },
+  "lib": ["es2015"],
+  "ts-node": {
+      "esm": true
+  },
+  "moduleResolution": "node",
+  "include": ["**/*.ts"],
+  "compileOnSave": true
+}
