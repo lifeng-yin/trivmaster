@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { io } from 'socket.io-client'
+import ChatBox from './ChatBox'
 
 function Room() {
   const navigate = useNavigate()
@@ -10,12 +11,20 @@ function Room() {
   }
   
   const socket = io(import.meta.env.VITE_SERVER_URL)
-  console.log(socket)
+  
+  socket.emit('join-room', id)
+
+  
   
   return (
-    <div>
-      <h1>Room {id}</h1>
-    </div>
+    <main>
+      <div>
+        <h1>Room {id}</h1>
+        <ChatBox socket={socket}/>
+      </div>
+      
+    </main>
+    
   )
 }
 

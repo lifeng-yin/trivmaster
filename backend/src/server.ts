@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 import express, { Express } from 'express'
 import { createServer } from 'http'
-import { Server } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 
 dotenv.config()
 
@@ -14,6 +14,19 @@ const io = new Server(server, {
   cors: {
     origin: 'http://localhost:' + client_port
   }
+})
+
+
+io.on('connection', (socket: Socket) => {
+  socket.on('join-room', ({ id, username }: { id: string, username: string } ) => {
+    socket.join(id)
+
+    io.in(id).emit('chat:message', {
+      type: 'system',
+      author: undefined,
+      content: `${username} has joined.`
+    })
+  })
 })
 
 
