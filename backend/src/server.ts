@@ -16,16 +16,22 @@ const io = new Server(server, {
   }
 })
 
-
 io.on('connection', (socket: Socket) => {
-  socket.on('join-room', ({ id, username }: { id: string, username: string } ) => {
-    socket.join(id)
+  socket.on('join-room', ({ roomId, author }: { roomId: string, author: string } ) => {
+    socket.join(roomId)
 
-    io.in(id).emit('chat:message', {
+    io.in(roomId).emit('chat:message', { 
+      roomId,
+      author,
       type: 'system',
-      author: undefined,
-      content: `${username} has joined.`
+      content: `${author} has joined.` 
     })
+  })
+
+  socket.on('chat:message', message => {
+    for (const roomId of socket.rooms) {
+      if (roomId) io.in(roomId).emit('chat:message', message)
+    }
   })
 })
 

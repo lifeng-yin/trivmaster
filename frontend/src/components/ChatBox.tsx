@@ -10,6 +10,7 @@ type Message = {
 function ChatBox({ socket }: { socket: Socket}) {
 
   const [chatMessages, setChatMessages] = useState<Message[]>([])
+  const [typedChatMessage, setTypedChatMessage] = useState('')
 
   useEffect(() => {
     const onChatMessage = (message: Message) => {
@@ -20,6 +21,17 @@ function ChatBox({ socket }: { socket: Socket}) {
       socket.offAny(onChatMessage)
     }
   }, [socket])
+
+  const handleChatMessageSend = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (typedChatMessage === '') return
+    
+    socket.emit('chat:message', {
+      type: 'regular',
+      content: typedChatMessage
+    })
+    setTypedChatMessage('')
+  } 
 
   
 
@@ -36,6 +48,10 @@ function ChatBox({ socket }: { socket: Socket}) {
       })
       : <div>Loading messages...</div>
     }
+    <form onSubmit={handleChatMessageSend}>
+      <input placeholder='Write a message...' value={typedChatMessage} onChange={e => setTypedChatMessage(e.target.value)}></input>
+      <button type="submit">Send</button>
+    </form>
   </div>)
 }
 
