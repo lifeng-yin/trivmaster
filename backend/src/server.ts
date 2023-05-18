@@ -17,8 +17,8 @@ const io = new Server(server, {
 })
 
 io.on('connection', (socket: Socket) => {
-  socket.on('join-room', ({ roomId, author }: { roomId: string, author: string } ) => {
-    socket.join(roomId)
+  socket.on('join-room', async ({ roomId, author }: { roomId: string, author: string } ) => {
+    await socket.join(roomId)
 
     io.in(roomId).emit('chat:message', { 
       roomId,
@@ -28,10 +28,9 @@ io.on('connection', (socket: Socket) => {
     })
   })
 
-  socket.on('chat:message', message => {
-    for (const roomId of socket.rooms) {
-      if (roomId) io.in(roomId).emit('chat:message', message)
-    }
+  socket.on('chat:message', async message => {
+    const [, roomId] = socket.rooms
+    io.to(roomId).emit('chat:message', message)
   })
 })
 

@@ -6,20 +6,20 @@ const socket = io(import.meta.env.VITE_SERVER_URL)
 
 function Room() {
   const navigate = useNavigate()
-  const { id } = useParams()
+  const { roomId } = useParams()
 
-  if (!id) {
+  if (!roomId) {
     navigate('/join')
   }
   
-  socket.emit('join-room', id)
+  socket.emit('join-room', { roomId })
 
   
   
   return (
     <main>
       <div>
-        <h1>Room {id}</h1>
+        <h1>Room {roomId}</h1>
         <ChatBox socket={socket}/>
       </div>
       
