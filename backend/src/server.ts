@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 import express, { Express } from 'express'
 import { createServer } from 'http'
 import { Server, Socket } from 'socket.io'
+import { ISocket } from './types.ts'
 
 dotenv.config()
 
@@ -16,21 +17,32 @@ const io = new Server(server, {
   }
 })
 
-io.on('connection', (socket: Socket) => {
-  socket.on('join-room', async ({ roomId, author }: { roomId: string, author: string } ) => {
+io.on('connection', (socket: ISocket) => {
+  socket.on('join-room', async ({ roomId, author: username }: { roomId: string, author: string } ) => {
     await socket.join(roomId)
 
     io.in(roomId).emit('chat:message', { 
       roomId,
-      author,
+      author: username,
       type: 'system',
-      content: `${author} has joined.` 
+      content: `${username} has joined.` 
     })
+
+    socket.username = username
+    socket.roomId = roomId
   })
 
   socket.on('chat:message', async message => {
-    const [, roomId] = socket.rooms
-    io.to(roomId).emit('chat:message', message)
+    io.to(socket.roomId).emit('chat:message', message)
+  })
+
+  socket.on('disconnect', () => {
+    io.in(socket.roomId).emit('chat:message', { 
+      roomId: socket.roomId,
+      author: socket.username,
+      type: 'system',
+      content: `${socket.username} has left.` 
+    })
   })
 })
 
