@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Socket } from 'socket.io-client'
 
 type Message = {
@@ -11,9 +11,15 @@ function ChatBox({ socket }: { socket: Socket}) {
 
   const [chatMessages, setChatMessages] = useState<Message[]>([])
 
-  socket.on('chat:message', (message: Message) => {
-    setChatMessages((msgs: Message[]) => [...msgs, message])
-  })
+  useEffect(() => {
+    const onChatMessage = (message: Message) => {
+      setChatMessages((msgs: Message[]) => [...msgs, message])
+    }
+    socket.on('chat:message', onChatMessage)
+    return () => {
+      socket.offAny(onChatMessage)
+    }
+  }, [socket])
 
   
 
