@@ -7,12 +7,13 @@ type Message = {
   content: string
 }
 
-function ChatBox({ socket }: { socket: Socket}) {
+function ChatBox({ socket, roomId }: { socket: Socket, roomId: string }) {
 
   const [chatMessages, setChatMessages] = useState<Message[]>([])
   const [typedChatMessage, setTypedChatMessage] = useState('')
 
   useEffect(() => {
+    socket.emit('join-room', { roomId })
     const onChatMessage = (message: Message) => {
       setChatMessages((msgs: Message[]) => [...msgs, message])
     }
@@ -20,7 +21,7 @@ function ChatBox({ socket }: { socket: Socket}) {
     return () => {
       socket.offAny(onChatMessage)
     }
-  }, [socket])
+  }, [socket, roomId])
 
   const handleChatMessageSend = (event: React.FormEvent) => {
     event.preventDefault()
@@ -35,24 +36,36 @@ function ChatBox({ socket }: { socket: Socket}) {
 
   
 
-  return (<div>
-    <h3>Chat</h3>
-    { chatMessages
-      ? chatMessages.map((message: Message, index) => {
-        if (message.type === 'system') {
-          return <div key={index}>{message.content}</div>
+  return (
+    <div className="absolute bottom-4 right-4 w-80 h-96 p-4 rounded border-gray-300 border-1 border-solid">
+      <h2 className="font-bold">Chat</h2>
+      <div className="overflow-auto h-[18rem]">
+        { chatMessages
+          ? chatMessages.map((message: Message, index) => {
+            if (message.type === 'system') {
+              return <div key={index}>{message.content}</div>
+            }
+            else return (<div key={index}>
+              <strong>{message.author}</strong>:<span>{message.content}</span>
+            </div>)
+          })
+          : <div>Loading messages...</div>
         }
-        else return (<div key={index}>
-          <strong>{message.author}</strong>:<span>{message.content}</span>
-        </div>)
-      })
-      : <div>Loading messages...</div>
-    }
-    <form onSubmit={handleChatMessageSend}>
-      <input placeholder='Write a message...' value={typedChatMessage} onChange={e => setTypedChatMessage(e.target.value)}></input>
-      <button type="submit">Send</button>
-    </form>
-  </div>)
+      </div>
+      <form onSubmit={handleChatMessageSend} className="mt-2 flex justify-between gap-2">
+        <input 
+          placeholder='Write a message...'
+          value={typedChatMessage}
+          onChange={e => setTypedChatMessage(e.target.value)}
+          className="bg-gray-100 pl-2 rounded-md"
+        ></input>
+        <button
+          type="submit"
+          className="text-white bg-blue-600 px-4 py-1 rounded-md"
+        >Send</button>
+      </form>
+    </div>
+  )
 }
 
 export default ChatBox
