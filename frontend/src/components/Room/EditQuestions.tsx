@@ -1,6 +1,6 @@
 const Questions = () => {
   return <>
-    Questions
+    <h1 className="text-center text-2xl font-bold">Edit Questions</h1>
   </>
 }
 
