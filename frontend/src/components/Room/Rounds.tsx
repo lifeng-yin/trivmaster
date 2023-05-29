@@ -1,7 +1,7 @@
 const Rounds = () => {
-  return <main>
+  return <>
     Rounds
-  </main>
+  </>
 }
 
 export default Rounds

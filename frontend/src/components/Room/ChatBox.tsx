@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Socket } from 'socket.io-client'
 
 type Message = {
@@ -11,6 +11,8 @@ function ChatBox({ socket, roomId }: { socket: Socket, roomId: string }) {
 
   const [chatMessages, setChatMessages] = useState<Message[]>([])
   const [typedChatMessage, setTypedChatMessage] = useState('')
+
+  const messagesContainer = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     socket.emit('join-room', { roomId })
@@ -32,27 +34,33 @@ function ChatBox({ socket, roomId }: { socket: Socket, roomId: string }) {
       content: typedChatMessage
     })
     setTypedChatMessage('')
-  } 
+  }
 
-  
+  useEffect(() => {
+    const { offsetHeight, scrollHeight, scrollTop } = messagesContainer?.current as HTMLDivElement
+    if (scrollHeight <= scrollTop + offsetHeight + 100) {
+      messagesContainer.current?.scrollTo(0, scrollHeight)
+    }
+  })
+
 
   return (
-    <div className="absolute bottom-4 right-4 w-80 h-96 p-4 rounded border-gray-300 border-1 border-solid">
+    <div className="h-1/2 p-4 rounded border-gray-300 border-1 border-solid flex flex-col">
       <h2 className="font-bold">Chat</h2>
-      <div className="overflow-auto h-[18rem]">
+      <div ref={messagesContainer} className="overflow-scroll flex-1 [overflow-anchor:none]">
         { chatMessages
           ? chatMessages.map((message: Message, index) => {
             if (message.type === 'system') {
-              return <div key={index}>{message.content}</div>
+              return <div key={index} className="h-4 my-1 [overflow-anchor:auto]">{message.content}</div>
             }
-            else return (<div key={index}>
+            else return (<div key={index} className="h-4 my-1 [overflow-anchor:auto]">
               <strong>{message.author}</strong>:<span>{message.content}</span>
             </div>)
           })
           : <div>Loading messages...</div>
         }
       </div>
-      <form onSubmit={handleChatMessageSend} className="mt-2 flex justify-between gap-2">
+      <form onSubmit={handleChatMessageSend} className="flex-none flex justify-between gap-2">
         <input 
           placeholder='Write a message...'
           value={typedChatMessage}

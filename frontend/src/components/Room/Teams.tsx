@@ -1,7 +1,7 @@
 const Teams = () => {
-  return <main>
+  return <>
     Teams
-  </main>
+  </>
 }
 
 export default Teams

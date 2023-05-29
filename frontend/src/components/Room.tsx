@@ -1,11 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { io } from 'socket.io-client'
-import ChatBox from './ChatBox'
+import ChatBox from './Room/ChatBox'
 import { ReactElement, useState } from 'react'
 import { IconUsers, IconClock, IconEdit } from '@tabler/icons-react'
 import Teams from './Room/Teams'
 import Rounds from './Room/Rounds'
 import Questions from './Room/Questions'
+import ScoreBox from './Room/ScoreBox'
 
 
 
@@ -18,7 +19,8 @@ function Room() {
   const [activeComponent, setActiveComponent] = useState<ReactElement>(<Teams />)
 
   if (!roomId) {
-    return navigate('/join')
+    navigate('/join')
+    return <></>
   }
   
   
@@ -44,10 +46,16 @@ function Room() {
   }
   
   return (
-    <div className="flex">
-      <Sidebar />
-      {activeComponent}
-      <ChatBox socket={socket} roomId={roomId} />
+    <div className="flex p-4 items-stretch h-screen">
+      {/* <Sidebar /> */}
+      <main className="w-2/3 h-full">
+        {activeComponent}
+      </main>
+      <aside className="w-1/3 h-full">
+        <ScoreBox socket={socket} roomId={roomId} />
+        <ChatBox socket={socket} roomId={roomId} />
+      </aside>
+      
     </div>
   )
 }

@@ -1,7 +1,7 @@
 const Questions = () => {
-  return <main>
+  return <>
     Questions
-  </main>
+  </>
 }
 
 export default Questions
