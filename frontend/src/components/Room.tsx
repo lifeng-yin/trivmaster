@@ -10,13 +10,6 @@ import ScoreBox from './Room/ScoreBox'
 
 type ActivePageType = "playing" | "teams" | "round" | "questions"
 
-const activePageComponents = {
-  "teams": <EditTeams />,
-  "round": <EditRound />,
-  "questions": <EditQuestions />,
-  "playing": <></>
-}
-
 const socket = io(import.meta.env.VITE_SERVER_URL)
 
 function Room() {
@@ -50,6 +43,13 @@ function Room() {
         <SidebarLink icon={<IconEdit />} name="questions" />
       </nav>
     )
+  }
+
+  const activePageComponents = {
+    "teams": <EditTeams socket={socket} roomId={roomId} />,
+    "round": <EditRound socket={socket} roomId={roomId} />,
+    "questions": <EditQuestions socket={socket} roomId={roomId} />,
+    "playing": <></>
   }
 
 
