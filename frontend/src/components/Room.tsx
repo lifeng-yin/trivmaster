@@ -28,18 +28,18 @@ function Room() {
   function SidebarLink ({ name, icon }: { name: string, icon: ReactElement }) {
     return <div onClick={() => setActivePage(name as ActivePageType)} className="flex">
       { icon }
-      <span>{ name }</span>
+      <span className="capitalize">{ name }</span>
     </div>
   }
 
   function Sidebar() {
     return (
-      <nav className="absolute">
+      <nav className="absolute hidden">
         <div>
           <h1>Room {roomId}</h1>
         </div>
         <SidebarLink icon={<IconUsers />} name="teams" />
-        <SidebarLink icon={<IconClock />} name="rounds" />
+        <SidebarLink icon={<IconClock />} name="round" />
         <SidebarLink icon={<IconEdit />} name="questions" />
       </nav>
     )
