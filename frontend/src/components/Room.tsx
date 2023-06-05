@@ -2,11 +2,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import ChatBox from './Room/ChatBox'
 import { ReactElement, useState } from 'react'
-import { IconUsers, IconClock, IconEdit } from '@tabler/icons-react'
+import { IconUsers, IconClock, IconEdit, IconRocket } from '@tabler/icons-react'
 import EditTeams from './Room/EditTeams'
 import EditRound from './Room/EditRound'
 import EditQuestions from './Room/EditQuestions'
 import ScoreBox from './Room/ScoreBox'
+import { UserContextProvider } from '../contexts/UserContext'
 
 type ActivePageType = "playing" | "teams" | "round" | "questions"
 
@@ -56,17 +57,21 @@ function Room() {
 
   
   return (
-    <div className="flex p-4 items-stretch h-screen">
-      <Sidebar />
-      <main className="w-2/3 h-full">
-        {activePageComponents[activePage]}
-      </main>
-      <aside className="w-1/3 h-full">
-        <ScoreBox socket={socket} roomId={roomId} />
-        <ChatBox socket={socket} roomId={roomId} />
-      </aside>
-      
-    </div>
+    <UserContextProvider>
+      <div className="flex p-4 items-stretch h-screen">
+        <Sidebar />
+        <main className="w-2/3 h-full relative">
+          {activePageComponents[activePage]}
+          { activePage !== 'playing' && <button className="absolute bottom-8 right-8 w-32 h-32 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center">
+            <IconRocket width="72" height="72" color="#EFEFEF" />
+          </button>}
+        </main>
+        <aside className="w-1/3 h-full">
+          <ScoreBox socket={socket} roomId={roomId} />
+          <ChatBox socket={socket} roomId={roomId} />
+        </aside>
+      </div>
+    </UserContextProvider>
   )
 }
 
