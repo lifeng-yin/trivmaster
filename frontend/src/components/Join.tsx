@@ -1,40 +1,51 @@
 import { useState, FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import useLocalStorageState from "use-local-storage-state"
-import { UserContextProvider } from "../contexts/UserContext"
 
 function Join() {
   const navigate = useNavigate()
-  const [stage, setStage] = useState(0)
+
+  const [username, setUsername] = useState('')
   const [roomId, setRoomId] = useState('')
-  const [username, setUsername] = useLocalStorageState('username', {
-    defaultValue: ''
-  })
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setStage(s => s + 1)
-    if (username) navigate(`/room/${roomId}`)
+    
+    if (username && roomId) navigate(`/room/${roomId}`, {
+      state: {
+        username,
+        roomId
+      }
+    })
   }
 
   return (
-    <UserContextProvider>
-      <div>
-        <h1>Join a room</h1>
-        <form onSubmit={handleSubmit}>
-          { stage === 0 && <>
-            <label htmlFor="room-id">Room Id</label>
-            <input id="room-id" value={roomId} onChange={e => setRoomId(e.target.value)}></input> 
-          </>}
-          { stage === 1 && <>
-            <label htmlFor="username">Username</label>
-            <input value={username} onChange={e => setUsername(e.target.value)}></input> 
-          </>}
-          
-          <button disabled={roomId === ''} type="submit">Join</button>
-        </form>
-      </div>
-    </UserContextProvider>
+    <div>
+      <h1>Join a room</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="room-id">Room Id</label>
+          <input 
+            id="room-id"
+            value={roomId}
+            onChange={e => setRoomId(e.target.value)}
+            pattern="[0-9]{4}"
+            required
+          ></input> 
+        </div>
+        <div>
+          <label htmlFor="username">Username</label>
+          <input
+            id="username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            pattern="[A-Za-z\d_]{1,15}"
+            required
+          ></input> 
+        </div>
+        
+        <button disabled={roomId === ''} type="submit">Join</button>
+      </form>
+    </div>
   )
 }
 
