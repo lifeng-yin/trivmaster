@@ -72,22 +72,28 @@ io.on('connection', (socket: ISocket) => {
   })
 
   socket.on('questions:add', () => {
-    rooms[socket.roomId].questions.push({
-      question: '',
-      answer: '',
-      alternateAnswers: ''
-    })
-    socket.emit('update-questions', rooms[socket.roomId].questions)
+    if (rooms[socket.roomId].owner === socket.id) {
+      rooms[socket.roomId].questions.push({
+        question: '',
+        answer: '',
+        alternateAnswers: ''
+      })
+      socket.emit('update-questions', rooms[socket.roomId].questions)
+    }
   })
 
   socket.on('questions:update', (index: number, question: Question) => {
-    rooms[socket.roomId].questions[index] = question
-    socket.emit('update-questions', rooms[socket.roomId].questions)
+    if (rooms[socket.roomId].owner === socket.id) {
+      rooms[socket.roomId].questions[index] = question
+      socket.emit('update-questions', rooms[socket.roomId].questions)
+    }
   })
 
   socket.on('questions:delete', (index: number) => {
-    rooms[socket.roomId].questions.splice(index, 1)
-    socket.emit('update-questions', rooms[socket.roomId].questions)
+    if (rooms[socket.roomId].owner === socket.id) {
+      rooms[socket.roomId].questions.splice(index, 1)
+      socket.emit('update-questions', rooms[socket.roomId].questions)
+    }
   })
 
   socket.on('disconnect', () => {
@@ -98,7 +104,19 @@ io.on('connection', (socket: ISocket) => {
       content: `${socket.username} has left.` 
     })
 
-    /*TODO: remove members from room array on disconnect*/
+    if (rooms[socket.roomId]) {
+      if (socket.id === rooms[socket.roomId].owner) {
+        io.in(socket.roomId).emit('room-deleted')
+        io.socketsLeave(socket.roomId)
+        delete rooms[socket.roomId]
+      }
+      else {
+        const index = rooms[socket.roomId].members.findIndex(id => id === socket.id)
+        rooms[socket.roomId].members.splice(index, 1)
+      }
+    }
+
+    console.log(rooms)
   })
 })
 
