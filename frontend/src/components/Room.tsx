@@ -15,12 +15,6 @@ function Room() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!location.state?.username || !location.state?.roomId) {
-      navigate('/join')
-    }
-  })
-
   const [activePage, setActivePage] = useState<ActivePageType>("questions")
   const [user, setUser] = useState<User>({
     id: socket.id,
@@ -31,6 +25,11 @@ function Room() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   
+  useEffect(() => {
+    if (!location.state?.username || !location.state?.roomId) {
+      navigate('/join')
+    }
+  })
 
   useEffect(() => {
     socket.emit('join-room', user)
@@ -45,8 +44,12 @@ function Room() {
 
     socket.on('update-questions', questions => setQuestions(questions))
 
-    socket.on('room-deleted', () => {
-      navigate('/join')
+    socket.on('error:username-taken', () => {
+      navigate('/join', { state: { error: 'Error: Username already taken.' }})
+    })
+
+    socket.on('error:room-deleted', () => {
+      navigate('/join', { state: { error: 'Error: Room unavailable as the owner has left.'}})
     })
 
     return () => {

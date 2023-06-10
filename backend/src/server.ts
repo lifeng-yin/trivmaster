@@ -23,18 +23,18 @@ const rooms: Record<string, Room> = {}
 
 io.on('connection', (socket: ISocket) => {
   socket.on('join-room', async ({ roomId, username }: { roomId: string, username: string } ) => {
-    await socket.join(roomId)
-
     const isAdmin = !(roomId in rooms)
 
     if (isAdmin) {
       rooms[roomId] = {
         id: roomId,
-        members: [socket.id],
-        owner: socket.id,
+        members: [username],
+        owner: username,
         inProgress: false,
         questions: []
       }
+
+      await socket.join(roomId)
 
       io.in(roomId).emit('chat:message', { 
         roomId,
@@ -45,7 +45,14 @@ io.on('connection', (socket: ISocket) => {
     }
 
     else {
-      rooms[roomId].members.push(socket.id)
+      console.log(username, rooms[roomId].members)
+      if (rooms[roomId].members.includes(username)) {
+        return socket.emit('error:username-taken')
+      }
+
+      rooms[roomId].members.push(username)
+
+      await socket.join(roomId)
 
       io.in(roomId).emit('chat:message', { 
         roomId,
@@ -72,7 +79,7 @@ io.on('connection', (socket: ISocket) => {
   })
 
   socket.on('questions:add', () => {
-    if (rooms[socket.roomId].owner === socket.id) {
+    if (rooms[socket.roomId].owner === socket.username) {
       rooms[socket.roomId].questions.push({
         question: '',
         answer: '',
@@ -83,14 +90,14 @@ io.on('connection', (socket: ISocket) => {
   })
 
   socket.on('questions:update', (index: number, question: Question) => {
-    if (rooms[socket.roomId].owner === socket.id) {
+    if (rooms[socket.roomId].owner === socket.username) {
       rooms[socket.roomId].questions[index] = question
       socket.emit('update-questions', rooms[socket.roomId].questions)
     }
   })
 
   socket.on('questions:delete', (index: number) => {
-    if (rooms[socket.roomId].owner === socket.id) {
+    if (rooms[socket.roomId].owner === socket.username) {
       rooms[socket.roomId].questions.splice(index, 1)
       socket.emit('update-questions', rooms[socket.roomId].questions)
     }
@@ -106,17 +113,15 @@ io.on('connection', (socket: ISocket) => {
 
     if (rooms[socket.roomId]) {
       if (socket.id === rooms[socket.roomId].owner) {
-        io.in(socket.roomId).emit('room-deleted')
+        io.in(socket.roomId).emit('error:room-deleted')
         io.socketsLeave(socket.roomId)
         delete rooms[socket.roomId]
       }
       else {
-        const index = rooms[socket.roomId].members.findIndex(id => id === socket.id)
+        const index = rooms[socket.roomId].members.findIndex(uname => uname === socket.username)
         rooms[socket.roomId].members.splice(index, 1)
       }
     }
-
-    console.log(rooms)
   })
 })
 
