@@ -1,7 +1,8 @@
 import { useState, FormEvent } from "react"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 function Join() {
+  const location = useLocation()
   const navigate = useNavigate()
 
   const [username, setUsername] = useState('')
@@ -45,6 +46,10 @@ function Join() {
         
         <button disabled={roomId === ''} type="submit">Join</button>
       </form>
+
+      { location.state && <div>
+        <p>{ location.state.error }</p>
+      </div>}
     </div>
   )
 }
