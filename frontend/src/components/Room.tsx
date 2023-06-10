@@ -15,16 +15,17 @@ function Room() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  if (!location.state.username || !location.state.roomId) {
-    navigate('/join')
-    return <></>
-  }
+  useEffect(() => {
+    if (!location.state?.username || !location.state?.roomId) {
+      navigate('/join')
+    }
+  })
 
   const [activePage, setActivePage] = useState<ActivePageType>("questions")
   const [user, setUser] = useState<User>({
     id: socket.id,
-    username: location.state.username,
-    roomId: location.state.roomId,
+    username: location.state?.username,
+    roomId: location.state?.roomId,
     isAdmin: false
   })
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
@@ -43,6 +44,10 @@ function Room() {
     })
 
     socket.on('update-questions', questions => setQuestions(questions))
+
+    socket.on('room-deleted', () => {
+      navigate('/join')
+    })
 
     return () => {
       socket.offAny()
