@@ -1,29 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { Socket } from 'socket.io-client'
+import socket from '../../socket'
+import { ChatMessage } from '../../types/types'
 
-type Message = {
-  type: 'regular' | 'system',
-  author?: string,
-  content: string
-}
+function ChatBox({ chatMessages }: { chatMessages: ChatMessage[] }) {
 
-function ChatBox({ socket, roomId }: { socket: Socket, roomId: string }) {
-
-  const [chatMessages, setChatMessages] = useState<Message[]>([])
   const [typedChatMessage, setTypedChatMessage] = useState('')
 
   const messagesContainer = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    socket.emit('join-room', { roomId })
-    const onChatMessage = (message: Message) => {
-      setChatMessages((msgs: Message[]) => [...msgs, message])
-    }
-    socket.on('chat:message', onChatMessage)
-    return () => {
-      socket.offAny(onChatMessage)
-    }
-  }, [socket, roomId])
 
   const handleChatMessageSend = (event: React.FormEvent) => {
     event.preventDefault()
@@ -33,6 +16,7 @@ function ChatBox({ socket, roomId }: { socket: Socket, roomId: string }) {
       type: 'regular',
       content: typedChatMessage
     })
+
     setTypedChatMessage('')
   }
 
@@ -49,7 +33,7 @@ function ChatBox({ socket, roomId }: { socket: Socket, roomId: string }) {
       <h2 className="font-bold">Chat</h2>
       <div ref={messagesContainer} className="overflow-scroll flex-1 [overflow-anchor:none]">
         { chatMessages
-          ? chatMessages.map((message: Message, index) => {
+          ? chatMessages.map((message: ChatMessage, index) => {
             if (message.type === 'system') {
               return <div key={index} className="h-4 my-1 [overflow-anchor:auto]">{message.content}</div>
             }

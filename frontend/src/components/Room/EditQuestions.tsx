@@ -1,16 +1,9 @@
-import { useState } from "react"
-import { Socket } from "socket.io-client"
-import useLocalStorageState from "use-local-storage-state"
+import socket from "../../socket"
 import UnderlinedInput from "../ui/UnderlinedInput"
 import InsertButton from "../ui/InsertButton"
 import { IconTrash } from "@tabler/icons-react"
+import { Question } from "../../types/types"
 
-
-type Question = {
-  question?: string,
-  answer?: string,
-  alternateAnswers?: string
-}
 
 type QuestionProps = {
   index: number,
@@ -19,9 +12,9 @@ type QuestionProps = {
   deleteQuestion: (index: number) => void 
 }
 
-const Question = ({ index, question, updateQuestion, deleteQuestion }: QuestionProps) => {
+const QuestionInput = ({ index, question, updateQuestion, deleteQuestion }: QuestionProps) => {
   return (
-    <div key={index}>
+    <div>
       <UnderlinedInput
         name="Question"
         value={question.question || ''}
@@ -58,37 +51,26 @@ const Question = ({ index, question, updateQuestion, deleteQuestion }: QuestionP
   )
 }
 
-const Questions = ({ socket, roomId }: { socket: Socket, roomId: string }) => {
-  const [questions, setQuestions] = useLocalStorageState<Question[]>('questions', {
-    defaultValue: []
-  })
-
+const Questions = ({ questions }: { questions: Question[] }) => {
   return <>
     <h1 className="text-center text-2xl font-bold">Edit Questions</h1>
     
     {questions.map((question, index) => (
-      <Question
+      <QuestionInput
+        key={index}
         index={index}
         question={question}
-        updateQuestion={(index, question) => {
-          setQuestions(questionsList => (
-            questionsList.map((q, i) => i === index ? question : q)
-          ))
+        updateQuestion={(index, question: Question) => {
+          socket.emit("questions:update", index, question)
         }}
         deleteQuestion={(index: number) => {
-          setQuestions(questionsList => (
-            questionsList.filter((q, i) => i !== index)
-          ))
+          socket.emit("questions:delete", index, questions)
         }}
-      ></Question>
+      ></QuestionInput>
     ))}
 
-    <InsertButton text="New Question" onClick={e => {
-      setQuestions(questionsList => [...questionsList, {
-        question: '',
-        answer: '',
-        alternateAnswers: ''
-      }])
+    <InsertButton text="New Question" onClick={() => {
+      socket.emit("questions:add")
     }}></InsertButton>
 
 
