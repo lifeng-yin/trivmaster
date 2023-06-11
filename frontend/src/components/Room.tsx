@@ -8,6 +8,7 @@ import EditQuestions from './Room/EditQuestions'
 import ScoreBox from './Room/ScoreBox'
 import { User, ChatMessage, Question } from '../types/types'
 import socket from '../socket'
+import Playing from './Room/Playing'
 
 type ActivePageType = "playing" | "teams" | "round" | "questions"
 
@@ -15,7 +16,8 @@ function Room() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [activePage, setActivePage] = useState<ActivePageType>("questions")
+  const [isLoading, setIsLoading] = useState(true)
+  const [activePage, setActivePage] = useState<ActivePageType>("teams")
   const [user, setUser] = useState<User>({
     id: socket.id,
     username: location.state?.username,
@@ -24,6 +26,8 @@ function Room() {
   })
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
+  const [team1, setTeam1] = useState<String[]>([])
+  const [team2, setTeam2] = useState<String[]>([])
   
   useEffect(() => {
     if (!location.state?.username || !location.state?.roomId) {
@@ -34,15 +38,23 @@ function Room() {
   useEffect(() => {
     socket.emit('join-room', user)
 
-    socket.on('user:update', (newUser: User) => {
+    socket.on('update-data', (newUser: User, newQuestions: Question[], newTeam1: String[], newTeam2: String[]) => {
       setUser(newUser)
+      setQuestions(newQuestions)
+      setTeam1(newTeam1)
+      setTeam2(newTeam2)
+      setIsLoading(false)
+    })
+
+    socket.on('update-questions', (newQuestions: Question[]) => setQuestions(newQuestions))
+    socket.on('update-teams', (newTeam1: String[], newTeam2: String[]) => {
+      setTeam1(newTeam1)
+      setTeam2(newTeam2)
     })
 
     socket.on('chat:message', (message: ChatMessage) => {
       setChatMessages((msgs: ChatMessage[]) => [...msgs, message])
     })
-
-    socket.on('update-questions', questions => setQuestions(questions))
 
     socket.on('error:username-taken', () => {
       navigate('/join', { state: { error: 'Error: Username already taken.' }})
@@ -50,6 +62,10 @@ function Room() {
 
     socket.on('error:room-deleted', () => {
       navigate('/join', { state: { error: 'Error: Room unavailable as the owner has left.'}})
+    })
+
+    socket.on('round:start', () => {
+      setActivePage('playing')
     })
 
     return () => {
@@ -80,24 +96,35 @@ function Room() {
     )
   }
 
+  let currentTeam: 0 | 1 | 2 = 0
+  if (team1.includes(user.username || '')) currentTeam = 1
+  if (team2.includes(user.username || '')) currentTeam = 2
+
   const activePageComponents = {
-    "teams": <></>,
+    "teams": <EditTeams currentTeam={currentTeam} team1={team1} team2={team2} />,
     "round": <></>,
     "questions": <EditQuestions questions={questions} />,
-    "playing": <></>
+    "playing": <Playing />
   }
 
 
-
+  if (isLoading) return (
+    <div>Loading...</div>
+  )
   
   return (
     <div className="flex p-4 items-stretch h-screen">
       <Sidebar />
       <main className="w-2/3 h-full relative">
         {activePageComponents[activePage]}
-        { activePage !== 'playing' && <button className="absolute bottom-8 right-8 w-32 h-32 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center transition ease duration-200">
-          <IconRocket width="84" height="84" color="#EFEFEF" />
-        </button>}
+        { activePage !== 'playing' && 
+          <button
+            className="absolute bottom-8 right-8 w-32 h-32 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center transition ease duration-200"
+            onClick={() => socket.emit('round:start')}
+          >
+            <IconRocket width="84" height="84" color="#EFEFEF" />
+          </button>
+        }
       </main>
       <aside className="w-1/3 h-full">
         <ScoreBox />
