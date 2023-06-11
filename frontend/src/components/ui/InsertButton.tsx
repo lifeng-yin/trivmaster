@@ -1,7 +1,7 @@
 import { MouseEvent } from 'react'
 import { IconCirclePlus } from '@tabler/icons-react'
 
-const InsertButton = ({ text, onClick }: { text: string, onClick: (e: MouseEvent) => void }) => {
+const InsertButton = ({ text, onClick }: { text: string, onClick?: (e: MouseEvent) => void }) => {
   return (
     <div className="flex" onClick={onClick}>
         <IconCirclePlus
