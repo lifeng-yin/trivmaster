@@ -6,7 +6,7 @@ import EditTeams from './Room/EditTeams'
 import EditRound from './Room/EditRound'
 import EditQuestions from './Room/EditQuestions'
 import ScoreBox from './Room/ScoreBox'
-import { User, ChatMessage, Question } from '../types/types'
+import { User, ChatMessage, Question, RoundSettings, Round } from '../types/types'
 import socket from '../socket'
 import Playing from './Room/Playing'
 
@@ -17,7 +17,7 @@ function Room() {
   const navigate = useNavigate()
 
   const [isLoading, setIsLoading] = useState(true)
-  const [activePage, setActivePage] = useState<ActivePageType>("teams")
+  const [activePage, setActivePage] = useState<ActivePageType>("round")
   const [user, setUser] = useState<User>({
     id: socket.id,
     username: location.state?.username,
@@ -28,6 +28,8 @@ function Room() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [team1, setTeam1] = useState<String[]>([])
   const [team2, setTeam2] = useState<String[]>([])
+  const [roundSettings, setRoundSettings] = useState<RoundSettings>()
+  const [round, setRound] = useState<Round>()
   
   useEffect(() => {
     if (!location.state?.username || !location.state?.roomId) {
@@ -38,11 +40,12 @@ function Room() {
   useEffect(() => {
     socket.emit('join-room', user)
 
-    socket.on('update-data', (newUser: User, newQuestions: Question[], newTeam1: String[], newTeam2: String[]) => {
+    socket.on('update-data', (newUser: User, newQuestions: Question[], newTeam1: String[], newTeam2: String[], newRoundSettings: RoundSettings) => {
       setUser(newUser)
       setQuestions(newQuestions)
       setTeam1(newTeam1)
       setTeam2(newTeam2)
+      setRoundSettings(newRoundSettings)
       setIsLoading(false)
     })
 
@@ -51,6 +54,7 @@ function Room() {
       setTeam1(newTeam1)
       setTeam2(newTeam2)
     })
+    socket.on('update-round-settings', (newRoundSettings: RoundSettings) => setRoundSettings(newRoundSettings))
 
     socket.on('chat:message', (message: ChatMessage) => {
       setChatMessages((msgs: ChatMessage[]) => [...msgs, message])
@@ -64,8 +68,13 @@ function Room() {
       navigate('/join', { state: { error: 'Error: Room unavailable as the owner has left.'}})
     })
 
-    socket.on('round:start', () => {
+    socket.on('round:start', (newRound: Round) => {
       setActivePage('playing')
+      setRound(newRound)
+    })
+
+    socket.on('round:end', () => {
+      setRound({ inProgress: false })
     })
 
     return () => {
@@ -102,9 +111,9 @@ function Room() {
 
   const activePageComponents = {
     "teams": <EditTeams currentTeam={currentTeam} team1={team1} team2={team2} />,
-    "round": <></>,
+    "round": <EditRound roundSettings={roundSettings!} />,
     "questions": <EditQuestions questions={questions} />,
-    "playing": <Playing />
+    "playing": <Playing round={round!} />
   }
 
 

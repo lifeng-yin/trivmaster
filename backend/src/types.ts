@@ -10,10 +10,10 @@ export interface Room {
   id: string,
   members: String[],
   owner: string,
-  inProgress: boolean,
   questions: Question[],
   team1: String[],
-  team2: String[]
+  team2: String[],
+  settings: RoundSettings
 }
 
 export type Question = {
@@ -27,4 +27,12 @@ export interface User {
   username?: string,
   isAdmin: boolean,
   roomId: string
+}
+
+export type RoundSettings = {
+  duration: {
+      minutes: number,
+      seconds: number
+  },
+  inProgress: boolean
 }

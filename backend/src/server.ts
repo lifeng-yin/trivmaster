@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 import express, { Express } from 'express'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
-import { ISocket, Question, Room, User } from './types.ts'
+import { ISocket, Question, Room, RoundSettings, User } from './types.ts'
 
 dotenv.config()
 
@@ -30,10 +30,16 @@ io.on('connection', (socket: ISocket) => {
         id: roomId,
         members: [username],
         owner: username,
-        inProgress: false,
         questions: [],
         team1: [],
-        team2: []
+        team2: [],
+        settings: {
+          duration: {
+            minutes: 5,
+            seconds: 0
+          },
+          inProgress: false
+        }
       }
 
       await socket.join(roomId)
@@ -66,11 +72,17 @@ io.on('connection', (socket: ISocket) => {
     socket.username = username
     socket.roomId = roomId
 
-    socket.emit('update-data', {
-      username,
-      roomId,
-      isAdmin
-    }, rooms[socket.roomId].questions, [], [])
+    socket.emit('update-data', 
+      {
+        username,
+        roomId,
+        isAdmin
+      },
+      rooms[socket.roomId].questions,
+      rooms[socket.roomId].team1,
+      rooms[socket.roomId].team2,
+      rooms[socket.roomId].settings
+    )
   })
 
   socket.on('chat:message', async message => {
@@ -112,10 +124,21 @@ io.on('connection', (socket: ISocket) => {
     io.in(socket.roomId).emit(`update-teams`, rooms[socket.roomId].team1, rooms[socket.roomId].team2)
   })
 
+  socket.on('round-settings:update', (newSettings: RoundSettings) => {
+    if (rooms[socket.roomId].owner === socket.username) {
+      rooms[socket.roomId].settings = newSettings
+      socket.emit('update-round-settings', rooms[socket.roomId].settings)
+    }
+  })
+
   socket.on('round:start', () => {
     if (rooms[socket.roomId].owner === socket.username) {
-      rooms[socket.roomId].inProgress = true
-      io.in(socket.roomId).emit('round:start')
+      const duration = rooms[socket.roomId].settings.duration.minutes * 60000 + rooms[socket.roomId].settings.duration.seconds * 1000
+      const dateFinished = new Date(Date.now() + duration)
+      io.in(socket.roomId).emit('round:start', { dateFinished, inProgress: true })
+      setTimeout(() => {
+        io.in(socket.roomId).emit('round:end')
+      }, duration)
     }
   })
 

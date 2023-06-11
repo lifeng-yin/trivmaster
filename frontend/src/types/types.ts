@@ -16,3 +16,15 @@ export type Question = {
     answer?: string,
     alternateAnswers?: string
 }
+
+export interface RoundSettings {
+    duration: {
+        minutes: number,
+        seconds: number
+    }
+}
+
+export interface Round {
+    dateFinished?: string,
+    inProgress: boolean
+}
