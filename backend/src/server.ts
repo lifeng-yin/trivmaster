@@ -31,7 +31,9 @@ io.on('connection', (socket: ISocket) => {
         members: [username],
         owner: username,
         inProgress: false,
-        questions: []
+        questions: [],
+        team1: [],
+        team2: []
       }
 
       await socket.join(roomId)
@@ -40,12 +42,11 @@ io.on('connection', (socket: ISocket) => {
         roomId,
         author: username,
         type: 'system',
-        content: `${username} has created the room.` 
+        content: `${username} has created the room.`
       })
     }
 
     else {
-      console.log(username, rooms[roomId].members)
       if (rooms[roomId].members.includes(username)) {
         return socket.emit('error:username-taken')
       }
@@ -65,13 +66,11 @@ io.on('connection', (socket: ISocket) => {
     socket.username = username
     socket.roomId = roomId
 
-    socket.emit('user:update', {
+    socket.emit('update-data', {
       username,
       roomId,
       isAdmin
-    })
-
-    socket.emit('update-questions', rooms[socket.roomId].questions)
+    }, rooms[socket.roomId].questions, [], [])
   })
 
   socket.on('chat:message', async message => {
@@ -100,6 +99,23 @@ io.on('connection', (socket: ISocket) => {
     if (rooms[socket.roomId].owner === socket.username) {
       rooms[socket.roomId].questions.splice(index, 1)
       socket.emit('update-questions', rooms[socket.roomId].questions)
+    }
+  })
+
+  socket.on('teams:change', (newTeam: 1 | 2) => {
+    rooms[socket.roomId][`team${newTeam}`].push(socket.username)
+    if (socket.currentTeam) {
+      const index = rooms[socket.roomId][`team${socket.currentTeam}`].findIndex(uname => uname === socket.username)
+      rooms[socket.roomId][`team${socket.currentTeam}`].splice(index, 1)
+    }
+    socket.currentTeam = newTeam
+    io.in(socket.roomId).emit(`update-teams`, rooms[socket.roomId].team1, rooms[socket.roomId].team2)
+  })
+
+  socket.on('round:start', () => {
+    if (rooms[socket.roomId].owner === socket.username) {
+      rooms[socket.roomId].inProgress = true
+      io.in(socket.roomId).emit('round:start')
     }
   })
 

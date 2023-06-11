@@ -2,7 +2,8 @@ import { Socket } from 'socket.io'
 
 export interface ISocket extends Socket {
   username?: string,
-  roomId: string
+  roomId: string,
+  currentTeam?: 1 | 2
 }
 
 export interface Room {
@@ -10,7 +11,9 @@ export interface Room {
   members: String[],
   owner: string,
   inProgress: boolean,
-  questions: Question[]
+  questions: Question[],
+  team1: String[],
+  team2: String[]
 }
 
 export type Question = {
