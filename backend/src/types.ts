@@ -34,5 +34,6 @@ export type RoundSettings = {
       minutes: number,
       seconds: number
   },
+  questionDuration: number,
   inProgress: boolean
 }

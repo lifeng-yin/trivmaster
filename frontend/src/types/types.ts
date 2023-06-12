@@ -21,7 +21,8 @@ export interface RoundSettings {
     duration: {
         minutes: number,
         seconds: number
-    }
+    },
+    questionDuration: number
 }
 
 export interface Round {

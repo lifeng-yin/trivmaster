@@ -38,6 +38,7 @@ io.on('connection', (socket: ISocket) => {
             minutes: 5,
             seconds: 0
           },
+          questionDuration: 5,
           inProgress: false
         }
       }

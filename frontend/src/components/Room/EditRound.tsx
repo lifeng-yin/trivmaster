@@ -12,6 +12,8 @@ const EditRound = ({ roundSettings }: { roundSettings: RoundSettings }) => {
       value={roundSettings.duration.minutes}
       onChange={e => socket.emit('round-settings:update', { ...roundSettings, duration: { minutes: e.target.value, seconds: roundSettings.duration.seconds }})}
       min={0}
+      max={99}
+      step={1}
     />
     <label htmlFor="duration-seconds">Seconds</label>
     <input
@@ -20,6 +22,18 @@ const EditRound = ({ roundSettings }: { roundSettings: RoundSettings }) => {
       onChange={e => socket.emit('round-settings:update', { ...roundSettings, duration: { minutes: roundSettings.duration.minutes, seconds: e.target.value }})}
       type="number"
       min={0}
+      max={55}
+      step={5}
+    />
+    <label htmlFor="duration-seconds">Question Duration (seconds)</label>
+    <input
+      id="question-duration"
+      value={roundSettings.questionDuration}
+      onChange={e => socket.emit('round-settings:update', { ...roundSettings, questionDuration: e.target.value })}
+      type="number"
+      min={2}
+      max={99}
+      step={1}
     />
   </>
 }
