@@ -27,5 +27,6 @@ export interface RoundSettings {
 
 export interface Round {
     dateFinished?: string,
-    inProgress: boolean
+    inProgress: boolean,
+    currentQuestion?: string
 }

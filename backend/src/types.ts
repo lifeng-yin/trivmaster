@@ -13,7 +13,8 @@ export interface Room {
   questions: Question[],
   team1: String[],
   team2: String[],
-  settings: RoundSettings
+  settings: RoundSettings,
+  currentRound?: Round
 }
 
 export type Question = {
@@ -34,6 +35,15 @@ export type RoundSettings = {
       minutes: number,
       seconds: number
   },
-  questionDuration: number,
-  inProgress: boolean
+  questionDuration: number
+}
+
+export type Round = {
+  dateFinished: Date
+  inProgress: boolean,
+  team1Score: number,
+  team2Score: number,
+  currentQuestion?: Question,
+  currentBuzzed?: string,
+  currentAnswered: boolean
 }

@@ -26,10 +26,29 @@ const Countdown = ({ round }: { round: Round }) => {
   </div>
 }
 
-const Playing = ({ round }: { round: Round }) => {
+const Playing = ({ round, isAnswering, currentQuestion, currentAnswers, currentCorrectUsername }: { round: Round, isAnswering: boolean, currentQuestion: string, currentAnswers: string[], currentCorrectUsername: string }) => {
+  const [typedAnswer, setTypedAnswer] = useState('')
+
   return <>
     <h1>Game In Progress</h1>
     <Countdown round={round} />
+    <h1>{currentQuestion}</h1>
+    { isAnswering
+      ? <div>
+        <input
+          value={typedAnswer}
+          onChange={e => setTypedAnswer(e.target.value)}
+          placeholder="Your answer here..."
+        />
+      </div>
+      : <div>
+        <h1>{currentCorrectUsername || 'No one'} answered it correctly!</h1>
+        { currentAnswers.length === 1
+          ? <p>The answer was {currentAnswers[0]}</p>
+          : <p>The possible answers were: {currentAnswers.join(', ')}</p>
+        }
+      </div>
+    }
   </>
 }
 

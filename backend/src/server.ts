@@ -39,7 +39,6 @@ io.on('connection', (socket: ISocket) => {
             seconds: 0
           },
           questionDuration: 5,
-          inProgress: false
         }
       }
 
@@ -132,15 +131,101 @@ io.on('connection', (socket: ISocket) => {
     }
   })
 
+  const getWinnerMessage = (room: Room) => {
+    if (room.currentRound.team1Score === room.currentRound.team2Score) {
+      return "GG to everyone, the game was a tie!"
+    }
+    if (room.currentRound.team1Score > room.currentRound.team2Score) {
+      return "Congrats to Team 1 who won!"
+    }
+    else {
+      return "Congrats to Team 2 who won!"
+    }
+  }
+
+  const newQuestion = () => {
+    if (!rooms[socket.roomId].currentRound) {
+      return
+    }
+
+    
+    const nextQuestion = rooms[socket.roomId].questions.pop()
+    console.log(nextQuestion)
+
+    if (!nextQuestion) {
+      io.in(socket.roomId).emit('round:end')
+      io.in(socket.roomId).emit('chat:message', {
+        type: 'system',
+        content: `Wow, all of the questions have been played! ${getWinnerMessage(rooms[socket.roomId])}`,
+      })
+      delete rooms[socket.roomId].currentRound
+    }
+
+    else {
+      io.in(socket.roomId).emit('round:new-question', nextQuestion.question)
+      rooms[socket.roomId].currentRound.currentQuestion = nextQuestion
+      rooms[socket.roomId].currentRound.currentAnswered = false
+
+      setTimeout(() => {
+        if (!rooms[socket.roomId].currentRound.currentAnswered) {
+          io.emit('round:answered', undefined, nextQuestion.answer.split(/\s+\s/))
+          setTimeout(newQuestion, 2000)
+        }
+      }, rooms[socket.roomId].settings.questionDuration * 1000)
+    }
+  }
+
   socket.on('round:start', () => {
     if (rooms[socket.roomId].owner === socket.username) {
       const duration = rooms[socket.roomId].settings.duration.minutes * 60000 + rooms[socket.roomId].settings.duration.seconds * 1000
-      const dateFinished = new Date(Date.now() + duration)
-      io.in(socket.roomId).emit('round:start', { dateFinished, inProgress: true })
+
+      rooms[socket.roomId].currentRound = {
+        dateFinished: new Date(Date.now() + duration),
+        inProgress: true,
+        team1Score: 0,
+        team2Score: 0,
+        currentAnswered: false
+      }
+
+      io.in(socket.roomId).emit('round:start', rooms[socket.roomId].currentRound)
+      io.in(socket.roomId).emit('chat:message', {
+        type: 'system',
+        content: `A new round is starting!`,
+      })
+
       setTimeout(() => {
-        io.in(socket.roomId).emit('round:end')
-      }, duration)
+        if (rooms[socket.roomId].currentRound) {
+          io.in(socket.roomId).emit('round:end');
+          io.in(socket.roomId).emit('chat:message', {
+            type: 'system',
+            content: `Time's up, the round has finished! ${getWinnerMessage(rooms[socket.roomId])}`,
+          });
+          delete rooms[socket.roomId].currentRound;
+        }
+      }, duration);
+
+      newQuestion()
     }
+  })
+
+  
+  socket.on('round:answer', (answer: string) => {
+    const answers = rooms[socket.roomId].currentRound.currentQuestion.answer.split(/\s,\s/)
+    answers.forEach(potentialAnswer => {
+      
+      if (answer === potentialAnswer) {
+        rooms[socket.roomId].currentRound.currentAnswered = true
+        if (rooms[socket.roomId].team1.includes(socket.username)) {
+          rooms[socket.roomId].currentRound.team1Score += 1
+          io.emit('round:answered', socket.username, answers, 1)
+        }
+        else {
+          rooms[socket.roomId].currentRound.team2Score += 1
+          io.emit('round:answered', socket.username, answers, 2)
+        }
+        setTimeout(newQuestion, 2000)
+      }
+    })
   })
 
   socket.on('disconnect', () => {

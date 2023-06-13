@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import ChatBox from './Room/ChatBox'
 import { ReactElement, useState, useEffect } from 'react'
-import { IconUsers, IconClock, IconEdit, IconRocket } from '@tabler/icons-react'
+import { IconUsers, IconClock, IconEdit, IconRocket, IconMenu } from '@tabler/icons-react'
 import EditTeams from './Room/EditTeams'
 import EditRound from './Room/EditRound'
 import EditQuestions from './Room/EditQuestions'
@@ -17,7 +17,8 @@ function Room() {
   const navigate = useNavigate()
 
   const [isLoading, setIsLoading] = useState(true)
-  const [activePage, setActivePage] = useState<ActivePageType>("round")
+  const [activePage, setActivePage] = useState<ActivePageType>("questions")
+  const [sidebarOpened, setSidebarOpened] = useState(false)
   const [user, setUser] = useState<User>({
     id: socket.id,
     username: location.state?.username,
@@ -30,6 +31,10 @@ function Room() {
   const [team2, setTeam2] = useState<String[]>([])
   const [roundSettings, setRoundSettings] = useState<RoundSettings>()
   const [round, setRound] = useState<Round>()
+  const [currentQuestion, setCurrentQuestion] = useState('')
+  const [currentAnswers, setCurrentAnswers] = useState<string[]>([])
+  const [currentCorrectUsername, setCurrentCorrectUsername] = useState('')
+  const [isAnswering, setIsAnswering] = useState(true)
   
   useEffect(() => {
     if (!location.state?.username || !location.state?.roomId) {
@@ -73,6 +78,17 @@ function Room() {
       setRound(newRound)
     })
 
+    socket.on('round:new-question', (question: string) => {
+      setCurrentQuestion(question)
+      setIsAnswering(true)
+    })
+
+    socket.on('round:answered', (username: string, answers: string[]) => {
+      setCurrentCorrectUsername(username)
+      setCurrentAnswers(answers)
+      setIsAnswering(false)
+    })
+
     socket.on('round:end', () => {
       setRound({ inProgress: false })
     })
@@ -85,15 +101,18 @@ function Room() {
   
 
   function SidebarLink ({ name, icon }: { name: string, icon: ReactElement }) {
-    return <div onClick={() => setActivePage(name as ActivePageType)} className="flex">
+    return <button onClick={() => {
+      setActivePage(name as ActivePageType)
+      setSidebarOpened(false)
+    }} className="flex">
       { icon }
       <span className="capitalize">{ name }</span>
-    </div>
+    </button>
   }
 
   function Sidebar() {
     return (
-      <nav className="absolute hidden">
+      <nav className="absolute">
         <div>
           <h1>Room {user?.roomId}</h1>
           <p>Playing as {user?.username}</p>
@@ -113,7 +132,7 @@ function Room() {
     "teams": <EditTeams currentTeam={currentTeam} team1={team1} team2={team2} />,
     "round": <EditRound roundSettings={roundSettings!} />,
     "questions": <EditQuestions questions={questions} />,
-    "playing": <Playing round={round!} />
+    "playing": <Playing round={round!} isAnswering={isAnswering} currentQuestion={currentQuestion} currentAnswers={currentAnswers} currentCorrectUsername={currentCorrectUsername} />
   }
 
 
@@ -123,7 +142,10 @@ function Room() {
   
   return (
     <div className="flex p-4 items-stretch h-screen">
-      <Sidebar />
+      {sidebarOpened
+        ? <Sidebar />
+        : <button onClick={() => setSidebarOpened(true)}><IconMenu /></button>
+      }
       <main className="w-2/3 h-full relative">
         {activePageComponents[activePage]}
         { activePage !== 'playing' && 
