@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import express, { Express } from 'express'
+import express, { Express, Request, Response } from 'express'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { ISocket, Question, Room, RoundSettings, User } from './types.ts'
@@ -10,11 +10,18 @@ const client_port = process.env.CLIENT_PORT || 5173
 const server_port = process.env.SERVER_PORT || 5000
 
 const app: Express = express()
+
+app.get('/', (req: Request, res, Response) => {
+  res.status(200).send('Welcome to the Trivmaster backend!')
+})
 const server = createServer(app)
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:' + client_port
-  }
+    origin: false,
+    methods: ["GET", "PUT", "POST", "DELETE"],
+    credentials: false
+  },
+  
 })
 
 
@@ -93,8 +100,7 @@ io.on('connection', (socket: ISocket) => {
     if (rooms[socket.roomId].owner === socket.username) {
       rooms[socket.roomId].questions.push({
         question: '',
-        answer: '',
-        alternateAnswers: ''
+        answer: ''
       })
       socket.emit('update-questions', rooms[socket.roomId].questions)
     }
@@ -251,6 +257,6 @@ io.on('connection', (socket: ISocket) => {
 })
 
 
-server.listen(server_port, () => {
+server.listen(+server_port, '0.0.0.0', () => {
   console.log(`🚀 Backend server is up and running on port ${server_port}!`)
 })

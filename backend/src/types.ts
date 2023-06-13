@@ -19,8 +19,7 @@ export interface Room {
 
 export type Question = {
   question: string,
-  answer: string,
-  alternateAnswers: string
+  answer: string
 }
 
 export interface User {
